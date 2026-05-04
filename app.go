@@ -17,7 +17,7 @@ import (
 	wailsruntime "github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
-const AppVersion = "0.1.0"
+const AppVersion = "1.0.0"
 const githubRepo = "jhusek/rent-me"
 
 type App struct {
