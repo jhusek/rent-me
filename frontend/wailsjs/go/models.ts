@@ -78,6 +78,22 @@ export namespace models {
 	        this.createdAt = source["createdAt"];
 	    }
 	}
+	export class DocumentContent {
+	    base64Data: string;
+	    mimeType: string;
+	    name: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new DocumentContent(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.base64Data = source["base64Data"];
+	        this.mimeType = source["mimeType"];
+	        this.name = source["name"];
+	    }
+	}
 	export class Expense {
 	    id: number;
 	    category: string;

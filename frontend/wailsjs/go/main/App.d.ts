@@ -29,6 +29,8 @@ export function DeleteDocument(arg1:number):Promise<void>;
 
 export function OpenDocument(arg1:number):Promise<void>;
 
+export function GetDocumentContent(arg1:number):Promise<models.DocumentContent>;
+
 export function DeleteExpense(arg1:number):Promise<void>;
 
 export function DeleteMaintenanceRequest(arg1:number):Promise<void>;

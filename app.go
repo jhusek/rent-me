@@ -17,7 +17,7 @@ import (
 	wailsruntime "github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
-const AppVersion = "1.1.0"
+const AppVersion = "1.2.0"
 const githubRepo = "jhusek/rent-me"
 
 type App struct {
@@ -327,6 +327,10 @@ func (a *App) DeleteDocument(id int64) error {
 		a.activityService.LogActivity("deleted", "document", id, "Document removed")
 	}
 	return err
+}
+
+func (a *App) GetDocumentContent(id int64) (services.DocumentContent, error) {
+	return a.documentService.GetDocumentContent(id)
 }
 
 // BrowseForFile opens a native file picker dialog and returns the selected path.

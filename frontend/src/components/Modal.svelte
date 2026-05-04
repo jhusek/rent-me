@@ -1,12 +1,13 @@
 <script lang="ts">
   export let show: boolean = false;
   export let title: string = '';
-  export let size: 'sm' | 'md' | 'lg' = 'md';
+  export let size: 'sm' | 'md' | 'lg' | 'xl' = 'md';
 
   const sizeClasses = {
     sm: 'max-w-md',
     md: 'max-w-lg',
     lg: 'max-w-2xl',
+    xl: 'max-w-5xl',
   };
 
   function handleBackdrop(e: MouseEvent) {

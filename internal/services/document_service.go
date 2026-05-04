@@ -2,6 +2,7 @@ package services
 
 import (
 	"database/sql"
+	"encoding/base64"
 	"fmt"
 	"net/http"
 	"os"
@@ -12,6 +13,14 @@ import (
 
 	"RentMe/internal/models"
 )
+
+// DocumentContent holds the base64-encoded file bytes and metadata needed for
+// the in-app viewer.
+type DocumentContent struct {
+	Base64Data string `json:"base64Data"`
+	MimeType   string `json:"mimeType"`
+	Name       string `json:"name"`
+}
 
 type DocumentService struct {
 	db *sql.DB
@@ -138,6 +147,30 @@ func openWithDefaultApp(path string) error {
 		cmd = exec.Command("xdg-open", path)
 	}
 	return cmd.Start()
+}
+
+// GetDocumentContent retrieves the stored file bytes from the database and
+// returns them base64-encoded along with the detected MIME type and document
+// name so the frontend can render an in-app preview.
+func (s *DocumentService) GetDocumentContent(id int64) (DocumentContent, error) {
+	row := s.db.QueryRow("SELECT file_data, mime_type, name FROM documents WHERE id = ?", id)
+	var fileData []byte
+	var mimeType, name sql.NullString
+	if err := row.Scan(&fileData, &mimeType, &name); err != nil {
+		return DocumentContent{}, fmt.Errorf("document not found: %w", err)
+	}
+	if len(fileData) == 0 {
+		return DocumentContent{}, fmt.Errorf("no file content stored for this document")
+	}
+	mt := mimeType.String
+	if mt == "" {
+		mt = http.DetectContentType(fileData)
+	}
+	return DocumentContent{
+		Base64Data: base64.StdEncoding.EncodeToString(fileData),
+		MimeType:   mt,
+		Name:       name.String,
+	}, nil
 }
 
 func scanDocument(rows *sql.Rows) (models.Document, error) {

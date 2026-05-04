@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { GetDocuments, CreateDocument, DeleteDocument, BrowseForFile, OpenDocument } from '../../wailsjs/go/main/App';
+  import { GetDocuments, CreateDocument, DeleteDocument, BrowseForFile, GetDocumentContent } from '../../wailsjs/go/main/App';
   import PageHeader from '../components/PageHeader.svelte';
   import Modal from '../components/Modal.svelte';
   import Badge from '../components/Badge.svelte';
@@ -22,6 +22,19 @@
   let showConfirm = false;
   let deleteId: number | null = null;
   let deleteLabel = '';
+
+  // Viewer state
+  let showViewer = false;
+  let viewerDoc: any = null;
+  let viewerContent: { base64Data: string; mimeType: string; name: string } | null = null;
+  let viewerLoading = false;
+  $: viewerDataUrl = viewerContent ? `data:${viewerContent.mimeType};base64,${viewerContent.base64Data}` : '';
+  $: viewerIsImage = viewerContent?.mimeType?.startsWith('image/') ?? false;
+  $: viewerIsPdf = viewerContent?.mimeType === 'application/pdf' ?? false;
+  $: viewerIsText = viewerContent?.mimeType?.startsWith('text/') ?? false;
+  $: viewerText = (viewerIsText && viewerContent)
+    ? decodeURIComponent(escape(atob(viewerContent.base64Data)))
+    : '';
 
   // Toast state
   let toastMessage = '';
@@ -130,12 +143,18 @@
     }
   }
 
-  async function openDocumentView(id: number) {
+  async function openDocumentView(d: any) {
+    viewerDoc = d;
+    viewerContent = null;
+    viewerLoading = true;
+    showViewer = true;
     try {
-      await OpenDocument(id);
+      viewerContent = await GetDocumentContent(d.id);
     } catch (e) {
-      toast('Could not open document: ' + e, 'error');
+      showViewer = false;
+      toast('Could not load document: ' + e, 'error');
     }
+    viewerLoading = false;
   }
 
   function openDelete(d: any) {
@@ -231,7 +250,7 @@
           </div>
         </div>
         <div class="mt-3 pt-3 border-t border-gray-100 flex justify-end gap-2">
-          <button class="btn-secondary btn-sm" on:click={() => openDocumentView(d.id)}>👁️ View</button>
+          <button class="btn-secondary btn-sm" on:click={() => openDocumentView(d)}>👁️ View</button>
           <button class="btn-danger btn-sm" on:click={() => openDelete(d)}>🗑️ Delete</button>
         </div>
       </div>
@@ -285,6 +304,38 @@
   <svelte:fragment slot="footer">
     <button class="btn-secondary" on:click={() => showModal = false}>Cancel</button>
     <button class="btn-primary" type="submit" form="document-form" disabled={!canSave}>Upload</button>
+  </svelte:fragment>
+</Modal>
+
+<!-- Document Viewer -->
+<Modal bind:show={showViewer} title={viewerDoc?.name ?? 'Document'} size="xl">
+  {#if viewerLoading}
+    <div class="flex items-center justify-center h-96 text-gray-400 text-lg">Loading…</div>
+  {:else if viewerContent}
+    {#if viewerIsImage}
+      <div class="flex items-center justify-center overflow-auto max-h-[70vh]">
+        <img src={viewerDataUrl} alt={viewerContent.name} class="max-w-full max-h-[70vh] object-contain rounded" />
+      </div>
+    {:else if viewerIsPdf}
+      <iframe
+        src={viewerDataUrl}
+        title={viewerContent.name}
+        class="w-full rounded border border-gray-200"
+        style="height: 70vh;"
+      ></iframe>
+    {:else if viewerIsText}
+      <pre class="bg-gray-50 rounded p-4 text-sm text-gray-800 overflow-auto max-h-[70vh] whitespace-pre-wrap break-words">{viewerText}</pre>
+    {:else}
+      <div class="flex flex-col items-center justify-center gap-4 h-64 text-gray-500">
+        <span class="text-5xl">📎</span>
+        <p class="text-base font-medium">{viewerContent.name}</p>
+        <p class="text-sm text-gray-400">Preview is not available for this file type ({viewerContent.mimeType}).</p>
+      </div>
+    {/if}
+    <p class="mt-3 text-xs text-gray-400 text-right">{viewerContent.mimeType}</p>
+  {/if}
+  <svelte:fragment slot="footer">
+    <button class="btn-secondary" on:click={() => showViewer = false}>Close</button>
   </svelte:fragment>
 </Modal>
 

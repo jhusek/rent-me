@@ -54,6 +54,10 @@ export function OpenDocument(arg1) {
   return window['go']['main']['App']['OpenDocument'](arg1);
 }
 
+export function GetDocumentContent(arg1) {
+  return window['go']['main']['App']['GetDocumentContent'](arg1);
+}
+
 export function DeleteExpense(arg1) {
   return window['go']['main']['App']['DeleteExpense'](arg1);
 }
